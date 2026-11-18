@@ -16,10 +16,14 @@ generar: bench/generar.cpp src/imagen.cpp
 arnes: bench/arnes.cpp src/filtros.cpp src/imagen.cpp
 	$(CXX) $(CXXFLAGS) -Isrc -o $@ $^
 
-pruebas: all
+prueba_filtros: tests/filtros.cpp src/filtros.cpp src/imagen.cpp
+	$(CXX) $(CXXFLAGS) -Isrc -o $@ $^
+
+pruebas: all prueba_filtros
+	./prueba_filtros
 	bash tests/pruebas.sh
 
 clean:
-	rm -f $(BIN)
+	rm -f $(BIN) prueba_filtros
 
 .PHONY: all pruebas clean

@@ -28,10 +28,10 @@ deploy/nube/      los manifiestos del clúster
 docs/             el informe, en cuatro archivos más el índice
 ```
 
-De los filtros vienen resueltos la escala de grises y el desenfoque de caja de
-3x3, cada uno en su versión secuencial y en su versión paralela. El desenfoque
-gaussiano separable, Sobel y el histograma con Otsu están declarados en
-`motor/src/filtros.hpp` y sin implementar.
+La escala de grises, el desenfoque de caja de 3x3, el gaussiano separable y
+Sobel tienen versiones secuencial y paralela. El gaussiano directo 5x5 sirve
+como referencia para comparar resultado y rendimiento. El histograma con Otsu
+sigue declarado en `motor/src/filtros.hpp` y pendiente de implementar.
 
 ## Construir y correr el motor
 
@@ -63,6 +63,8 @@ trabajan con cualquiera de los dos.
 
 ```console
 $ make pruebas
+  ok    gaussiano separable igual a la convolución directa 5x5
+  ok    Sobel paralelo y secuencial, imagen plana y validación
 Salida esperada, calculada aparte:
   ok    gris sobre la imagen de prueba
   ok    caja sobre la imagen de prueba
@@ -72,6 +74,8 @@ Lectura y escritura:
 Paralelo contra secuencial, imagen de 512x512:
   ok    gris idéntico con uno y con varios hilos
   ok    caja idéntico con uno y con varios hilos
+  ok    gaussiano idéntico con uno y con varios hilos
+  ok    sobel idéntico con uno y con varios hilos
 Filtro desconocido:
   ok    la cadena con un filtro inexistente se rechaza
 Cadenas que no se pueden aplicar:
@@ -116,6 +120,14 @@ deja la tabla completa en `mediciones/motor.csv`:
 ```console
 $ bash bench/medir.sh /tmp/medicion.ppm gris caja
 escrito ../mediciones/motor.csv con 40 filas
+```
+
+Para contrastar el gaussiano separable con su versión directa 5x5, el arnés
+acepta `gaussiano` y `gaussiano-directo`:
+
+```console
+$ OMP_NUM_THREADS=4 ./arnes gaussiano /tmp/medicion.ppm 5
+$ OMP_NUM_THREADS=4 ./arnes gaussiano-directo /tmp/medicion.ppm 5
 ```
 
 ## Convenciones que no cambian

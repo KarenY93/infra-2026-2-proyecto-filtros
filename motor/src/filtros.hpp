@@ -19,6 +19,11 @@ Imagen caja_paralelo(const Imagen& e);
 Imagen gaussiano_secuencial(const Imagen& e);
 Imagen gaussiano_paralelo(const Imagen& e);
 
+// Referencia de comparación: el mismo núcleo gaussiano aplicado como una
+// convolución 5x5 directa.
+Imagen gaussiano_directo_secuencial(const Imagen& e);
+Imagen gaussiano_directo_paralelo(const Imagen& e);
+
 // Magnitud del gradiente de Sobel sobre una imagen de un canal.
 Imagen sobel_secuencial(const Imagen& e);
 Imagen sobel_paralelo(const Imagen& e);
