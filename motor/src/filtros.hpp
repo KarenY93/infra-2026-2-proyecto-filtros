@@ -2,6 +2,7 @@
 #define FILTROS_HPP
 
 #include "imagen.hpp"
+#include <array>
 
 // Escala de grises con la ponderación BT.601. Entra un PPM de color y sale
 // un PGM de un canal. Cada píxel de salida depende solo del píxel de entrada
@@ -19,6 +20,11 @@ Imagen caja_paralelo(const Imagen& e);
 Imagen gaussiano_secuencial(const Imagen& e);
 Imagen gaussiano_paralelo(const Imagen& e);
 
+// Referencia de comparación: el mismo núcleo gaussiano aplicado como una
+// convolución 5x5 directa.
+Imagen gaussiano_directo_secuencial(const Imagen& e);
+Imagen gaussiano_directo_paralelo(const Imagen& e);
+
 // Magnitud del gradiente de Sobel sobre una imagen de un canal.
 Imagen sobel_secuencial(const Imagen& e);
 Imagen sobel_paralelo(const Imagen& e);
@@ -27,5 +33,17 @@ Imagen sobel_paralelo(const Imagen& e);
 // histograma y binariza con él.
 Imagen otsu_secuencial(const Imagen& e);
 Imagen otsu_paralelo(const Imagen& e);
+
+// Histograma de una imagen de un canal: h[v] cuenta los píxeles con valor v.
+// Las cuatro versiones dan el mismo resultado porque cuentan enteros.
+using Histograma = std::array<long long, 256>;
+Histograma histograma_secuencial(const Imagen& e);
+Histograma histograma_compartido(const Imagen& e);        // un arreglo, con atomic
+Histograma histograma_privado(const Imagen& e);           // uno por hilo, contiguos
+Histograma histograma_privado_relleno(const Imagen& e);   // uno por hilo, alineados a 64 B
+
+// Ecualización del histograma sobre una imagen de un canal.
+Imagen ecualizar_secuencial(const Imagen& e);
+Imagen ecualizar_paralelo(const Imagen& e);
 
 #endif

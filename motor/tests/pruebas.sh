@@ -27,6 +27,22 @@ echo "Salida esperada, calculada aparte:"
 revisar "gris sobre la imagen de prueba" ./comparar "$trabajo/gris.pgm" tests/datos/gris.pgm
 ./motor caja tests/datos/entrada.ppm "$trabajo/caja.ppm"
 revisar "caja sobre la imagen de prueba" ./comparar "$trabajo/caja.ppm" tests/datos/caja.ppm
+./motor gaussiano tests/datos/entrada.ppm "$trabajo/gaussiano.ppm"
+revisar "gaussiano sobre la imagen de prueba" ./comparar "$trabajo/gaussiano.ppm" tests/datos/gaussiano.ppm
+./motor sobel tests/datos/gris.pgm "$trabajo/sobel.pgm"
+revisar "sobel sobre la imagen de prueba" ./comparar "$trabajo/sobel.pgm" tests/datos/sobel.pgm
+
+echo "Contra la referencia independiente en Python:"
+# La referencia usa aritmética exacta y es lenta, así que se corre sobre la
+# imagen pequeña de prueba.
+for filtro in ecualizar otsu; do
+    python3 tests/referencia.py "$filtro" tests/datos/gris.pgm "$trabajo/ref_$filtro.pgm"
+    for hilos in 1 8; do
+        OMP_NUM_THREADS=$hilos ./motor "$filtro" tests/datos/gris.pgm "$trabajo/cpp_$filtro.pgm"
+        revisar "$filtro igual a la referencia con $hilos hilo(s)" \
+            ./comparar "$trabajo/cpp_$filtro.pgm" "$trabajo/ref_$filtro.pgm"
+    done
+done
 
 echo "Lectura y escritura:"
 ./motor gris tests/datos/gris.pgm "$trabajo/vuelta.pgm" 2> "$trabajo/err.txt"
@@ -42,11 +58,16 @@ revisar "caja sobre un canal escribe P5" bash -c \
 
 echo "Paralelo contra secuencial, imagen de 512x512:"
 ./generar "$trabajo/grande.ppm" 512 512 > /dev/null
-for filtro in gris caja; do
-    ./motor "$filtro" "$trabajo/grande.ppm" "$trabajo/$filtro-par" 
-    ./motor "$filtro" "$trabajo/grande.ppm" "$trabajo/$filtro-sec" --secuencial
-    revisar "$filtro idéntico con uno y con varios hilos" \
-        ./comparar "$trabajo/$filtro-par" "$trabajo/$filtro-sec"
+# Sobel, ecualizar y otsu necesitan un canal, así que se prueban con la
+# cadena que los alimenta. La última es la cadena completa del servicio.
+for filtro in gris caja gaussiano gris,sobel gris,gaussiano,sobel \
+              gris,ecualizar gris,otsu gris,gaussiano,sobel,otsu; do
+    ./motor "$filtro" "$trabajo/grande.ppm" "$trabajo/sec" --secuencial
+    for hilos in 1 8; do
+        OMP_NUM_THREADS=$hilos ./motor "$filtro" "$trabajo/grande.ppm" "$trabajo/par"
+        revisar "$filtro idéntico a la secuencial con $hilos hilo(s)" \
+            ./comparar "$trabajo/par" "$trabajo/sec"
+    done
 done
 
 echo "Filtro desconocido:"
@@ -62,7 +83,8 @@ else
 fi
 
 echo "Cadenas que no se pueden aplicar:"
-for caso in "sobel:un canal" "gris,gris:tres canales" "otsu:un canal"; do
+for caso in "sobel:un canal" "gris,gris:tres canales" "otsu:un canal" \
+            "ecualizar:un canal" "gaussiano,sobel:un canal"; do
     cadena="${caso%%:*}"
     espera="${caso##*:}"
     queja=$(./motor "$cadena" tests/datos/entrada.ppm "$trabajo/x" 2>&1 || true)

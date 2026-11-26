@@ -3,6 +3,8 @@ motor/motor
 motor/comparar
 motor/generar
 motor/arnes
+prueba_filtros
+prueba_reduccion
 *.o
 
 # imágenes de trabajo: la de medición la escribe el generador
